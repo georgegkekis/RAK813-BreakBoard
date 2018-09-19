@@ -92,35 +92,12 @@ Maintainer: Miguel Luis and Gregory Cristian
 /*!
 * User application data buffer size
 */
-#if defined( REGION_CN470 ) || defined( REGION_CN779 ) || defined( REGION_EU433 ) || defined( REGION_EU868 ) || defined( REGION_IN865 ) || defined( REGION_KR920 )
 
 #define LORAWAN_APP_DATA_SIZE                       16
-
-#elif defined( REGION_AS923 ) || defined( REGION_AU915 ) || defined( REGION_US915 ) || defined( REGION_US915_HYBRID )
-
-#define LORAWAN_APP_DATA_SIZE                       11
-
-#else
-
-#error "Please define a region in the compiler options."
-
-#endif
 
 static uint8_t DevEui[] = LORAWAN_DEVICE_EUI;
 static uint8_t AppEui[] = LORAWAN_APPLICATION_EUI;
 static uint8_t AppKey[] = LORAWAN_APPLICATION_KEY;
-
-#if( OVER_THE_AIR_ACTIVATION == 0 )
-
-static uint8_t NwkSKey[] = LORAWAN_NWKSKEY;
-static uint8_t AppSKey[] = LORAWAN_APPSKEY;
-
-/*!
-* Device address
-*/
-static uint32_t DevAddr = LORAWAN_DEVICE_ADDRESS;
-
-#endif
 
 /*!
 * Application port
@@ -785,29 +762,7 @@ void lora_process()
             LoRaMacPrimitives.MacMcpsIndication = McpsIndication;
             LoRaMacPrimitives.MacMlmeConfirm = MlmeConfirm;
             LoRaMacCallbacks.GetBatteryLevel = BoardGetBatteryLevel;
-#if defined( REGION_AS923 )
-            LoRaMacInitialization( &LoRaMacPrimitives, &LoRaMacCallbacks, LORAMAC_REGION_AS923 );
-#elif defined( REGION_AU915 )
-            LoRaMacInitialization( &LoRaMacPrimitives, &LoRaMacCallbacks, LORAMAC_REGION_AU915 );
-#elif defined( REGION_CN470 )
-            LoRaMacInitialization( &LoRaMacPrimitives, &LoRaMacCallbacks, LORAMAC_REGION_CN470 );
-#elif defined( REGION_CN779 )
-            LoRaMacInitialization( &LoRaMacPrimitives, &LoRaMacCallbacks, LORAMAC_REGION_CN779 );
-#elif defined( REGION_EU433 )
-            LoRaMacInitialization( &LoRaMacPrimitives, &LoRaMacCallbacks, LORAMAC_REGION_EU433 );
-#elif defined( REGION_EU868 )
             LoRaMacInitialization( &LoRaMacPrimitives, &LoRaMacCallbacks, LORAMAC_REGION_EU868 );
-#elif defined( REGION_IN865 )
-            LoRaMacInitialization( &LoRaMacPrimitives, &LoRaMacCallbacks, LORAMAC_REGION_IN865 );
-#elif defined( REGION_KR920 )
-            LoRaMacInitialization( &LoRaMacPrimitives, &LoRaMacCallbacks, LORAMAC_REGION_KR920 );
-#elif defined( REGION_US915 )
-            LoRaMacInitialization( &LoRaMacPrimitives, &LoRaMacCallbacks, LORAMAC_REGION_US915 );
-#elif defined( REGION_US915_HYBRID )
-            LoRaMacInitialization( &LoRaMacPrimitives, &LoRaMacCallbacks, LORAMAC_REGION_US915_HYBRID );
-#else
-#error "Please define a region in the compiler options."
-#endif
             TimerInit( &TxNextPacketTimer, OnTxNextPacketTimerEvent );
             
             //TimerInit( &Led1Timer, OnLed1TimerEvent );
@@ -827,96 +782,36 @@ void lora_process()
         }
       case DEVICE_STATE_JOIN:
         {
-#if( OVER_THE_AIR_ACTIVATION != 0 )
-            MlmeReq_t mlmeReq;
-            
-            // Initialize LoRaMac device unique ID
-            //BoardGetUniqueId( DevEui );
-            
-            printf("OTAA: \r\n");
-            printf("Dev_EUI: ");
-            dump_hex2str(lora_cfg->dev_eui , 8);
-            printf("AppEui: ");
-            dump_hex2str(lora_cfg->app_eui , 8);
-            printf("AppKey: ");
-            dump_hex2str(lora_cfg->app_key , 16);
-            
-            mlmeReq.Type = MLME_JOIN;
-            
-            mlmeReq.Req.Join.DevEui = lora_cfg->dev_eui;//DevEui;
-            mlmeReq.Req.Join.AppEui = lora_cfg->app_eui;//AppEui;
-            mlmeReq.Req.Join.AppKey = lora_cfg->app_key;//AppKey;
-            mlmeReq.Req.Join.NbTrials = 3;
-            
-#if defined ( REGION_US915 )  
-            
-            uint16_t ch_mask[5];
-            ch_mask[0] =0xff00;
-            ch_mask[1] =0x0000;
-            ch_mask[2] =0x0000;
-            ch_mask[3] =0x0000;
-            ch_mask[4] =0x0000;
-            
-            mibReq.Type = MIB_CHANNELS_DEFAULT_MASK;  
-            mibReq.Param.ChannelsDefaultMask = ch_mask;
-            LoRaMacMibSetRequestConfirm( &mibReq ); 
-            
-            mibReq.Type = MIB_CHANNELS_MASK;  
-            mibReq.Param.ChannelsDefaultMask = ch_mask;
-            LoRaMacMibSetRequestConfirm( &mibReq );
-            
-#endif            
-            if( NextTx == true )
-            {
-                LoRaMacStatus_t status;
-                status = LoRaMacMlmeRequest( &mlmeReq );
-                NRF_LOG_INFO("OTAA Join Start...%d \r\n", status);
-            }
-            DeviceState = DEVICE_STATE_SLEEP;
-            NRF_LOG_INFO("goto to sleep");
-#else
-            // Choose a random device address if not already defined in Commissioning.h
-            if( DevAddr == 0 )
-            {
-                // Random seed initialization
-                srand1( BoardGetRandomSeed( ) );
-                
-                // Choose a random device address
-                DevAddr = randr( 0, 0x01FFFFFF );
-            }
-            
-            printf("ABP: \r\n");
-            printf("Dev_EUI: ");
-            dump_hex2str(lora_cfg->dev_eui , 8);
-            printf("DevAddr: %08X\r\n", lora_cfg->dev_addr);
-            printf("NwkSKey: ");
-            dump_hex2str(lora_cfg->nwkskey , 16);
-            printf("AppSKey: ");
-            dump_hex2str(lora_cfg->appskey , 16);
-            
-            mibReq.Type = MIB_NET_ID;
-            mibReq.Param.NetID = LORAWAN_NETWORK_ID;
-            LoRaMacMibSetRequestConfirm( &mibReq );
-            
-            mibReq.Type = MIB_DEV_ADDR;
-            mibReq.Param.DevAddr = lora_cfg->dev_addr;//DevAddr;
-            LoRaMacMibSetRequestConfirm( &mibReq );
-            
-            mibReq.Type = MIB_NWK_SKEY;
-            mibReq.Param.NwkSKey = lora_cfg->nwkskey;//NwkSKey;
-            LoRaMacMibSetRequestConfirm( &mibReq );
-            
-            mibReq.Type = MIB_APP_SKEY;
-            mibReq.Param.AppSKey = lora_cfg->appskey;//AppSKey;
-            LoRaMacMibSetRequestConfirm( &mibReq );
-            
-            mibReq.Type = MIB_NETWORK_JOINED;
-            mibReq.Param.IsNetworkJoined = true;
-            LoRaMacMibSetRequestConfirm( &mibReq );
-            
-            DeviceState = DEVICE_STATE_SEND;
-#endif
-            break;
+        MlmeReq_t mlmeReq;
+        
+        // Initialize LoRaMac device unique ID
+        //BoardGetUniqueId( DevEui );
+        
+        printf("OTAA: \r\n");
+        printf("Dev_EUI: ");
+        dump_hex2str(lora_cfg->dev_eui , 8);
+        printf("AppEui: ");
+        dump_hex2str(lora_cfg->app_eui , 8);
+        printf("AppKey: ");
+        dump_hex2str(lora_cfg->app_key , 16);
+        
+        mlmeReq.Type = MLME_JOIN;
+        
+        mlmeReq.Req.Join.DevEui = lora_cfg->dev_eui;//DevEui;
+        mlmeReq.Req.Join.AppEui = lora_cfg->app_eui;//AppEui;
+        mlmeReq.Req.Join.AppKey = lora_cfg->app_key;//AppKey;
+        mlmeReq.Req.Join.NbTrials = 3;
+
+        if( NextTx == true )
+        {
+            LoRaMacStatus_t status;
+            status = LoRaMacMlmeRequest( &mlmeReq );
+            NRF_LOG_INFO("OTAA Join Start...%d \r\n", status);
+        }
+        DeviceState = DEVICE_STATE_SLEEP;
+        NRF_LOG_INFO("goto to sleep");
+
+        break;
         }
       case DEVICE_STATE_SEND:
         {
@@ -974,13 +869,3 @@ void lora_process()
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
