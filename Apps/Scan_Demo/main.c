@@ -1,30 +1,30 @@
 /**
 * Copyright (c) 2014 - 2017, Nordic Semiconductor ASA
-* 
+*
 * All rights reserved.
-* 
+*
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
-* 
+*
 * 1. Redistributions of source code must retain the above copyright notice, this
 *    list of conditions and the following disclaimer.
-* 
+*
 * 2. Redistributions in binary form, except as embedded into a Nordic
 *    Semiconductor ASA integrated circuit in a product or a software update for
 *    such product, must reproduce the above copyright notice, this list of
 *    conditions and the following disclaimer in the documentation and/or other
 *    materials provided with the distribution.
-* 
+*
 * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
 *    contributors may be used to endorse or promote products derived from this
 *    software without specific prior written permission.
-* 
+*
 * 4. This software, with or without modification, must only be used with a
 *    Nordic Semiconductor ASA integrated circuit.
-* 
+*
 * 5. Any software provided in binary form under this license must not be reverse
 *    engineered, decompiled, modified and/or disassembled.
-* 
+*
 * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
 * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
 * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-* 
+*
 */
 /** @file
 *
@@ -112,8 +112,8 @@
 #define UART_TX_BUF_SIZE                256                                         /**< UART TX buffer size. */
 #define UART_RX_BUF_SIZE                256                                         /**< UART RX buffer size. */
 
-#define SCAN_INTERVAL                   0x00A0                                      /**< Determines scan interval in units of 0.625 millisecond. */
-#define SCAN_WINDOW                     0x0050                                      /**< Determines scan window in units of 0.625 millisecond. */
+#define SCAN_INTERVAL                   0x0020                                      /**< Determines scan interval in units of 0.625 millisecond. */
+#define SCAN_WINDOW                     0x0010                                      /**< Determines scan window in units of 0.625 millisecond. */
 #define SCAN_TIMEOUT                    0
 
 #define UUID16_SIZE                     2                                           /**< Size of 16 bit UUID */
@@ -202,24 +202,33 @@ static uint32_t adv_report_parse(data_t * p_advdata, data_t * p_typedata)
 
     p_data = p_advdata->p_data;
 
-	printf("GGreport:\r\n");
-        for (i=0;i<p_data->data_len;i++)
+	//printf("GGreport:\r\n");
+        for (i=0;i<p_advdata->data_len;i++)
         {
             printf("%02x",p_data[i]);
-        }    
+        }
 		printf("\r\n");
+        for (i=0;i<p_advdata->data_len;i++)
+        {
+            if (isprint(p_data[i]))
+              printf("%c", p_data[i]);
+        }
+        printf("\r\n");
+
 
     while (index < p_advdata->data_len)
     {
         uint8_t field_length = p_data[index];
         uint8_t field_type   = p_data[index + 1];
-	        if (field_type == BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME || field_type == BLE_GAP_AD_TYPE_SHORT_LOCAL_NAME)
-        {
+	       // if (field_type == BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME || field_type == BLE_GAP_AD_TYPE_SHORT_LOCAL_NAME)
+        //{
             p_typedata->p_data   = &p_data[index + 2];
             p_typedata->data_len = field_length - 1;
-            return NRF_SUCCESS;
-        }
         index += field_length + 1;
+
+            return NRF_SUCCESS;
+      // }
+        //index += field_length + 1;
     }
     return NRF_ERROR_NOT_FOUND;
 }
@@ -248,21 +257,21 @@ static void gap_params_init(void)
     uint32_t                err_code;
     ble_gap_conn_params_t   gap_conn_params;
     ble_gap_conn_sec_mode_t sec_mode;
-    
+
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);
-    
+
     err_code = sd_ble_gap_device_name_set(&sec_mode,
                                           (const uint8_t *) DEVICE_NAME,
                                           strlen(DEVICE_NAME));
     APP_ERROR_CHECK(err_code);
-    
+
     memset(&gap_conn_params, 0, sizeof(gap_conn_params));
-    
+
     gap_conn_params.min_conn_interval = MIN_CONN_INTERVAL;
     gap_conn_params.max_conn_interval = MAX_CONN_INTERVAL;
     gap_conn_params.slave_latency     = SLAVE_LATENCY;
     gap_conn_params.conn_sup_timeout  = CONN_SUP_TIMEOUT;
-    
+
     err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
     APP_ERROR_CHECK(err_code);
 }
@@ -271,9 +280,9 @@ static void gap_params_init(void)
 
 int set_handler(int argc, char* argv[], lora_cfg_t* cfg_info)
 {
-    
+
     NRF_LOG_INFO("%s=%s", argv[0], argv[1]);
-    
+
     if (strcmp(argv[0], "dev_eui") == 0) {
         StrToHex((char *)cfg_info->dev_eui, argv[1], 8);
     }
@@ -294,7 +303,7 @@ int set_handler(int argc, char* argv[], lora_cfg_t* cfg_info)
     }
     else
     {
-        return -1;  
+        return -1;
     }
     return 0;
 }
@@ -305,7 +314,7 @@ int  parse_lora_config(char* str, lora_cfg_t *cfg)
     char* buf, *temp;
     char* argv[10];
     uint8_t flag = 1;
-    
+
     do{
         argc = 0;
         if ((temp = strchr(str, '&')) != NULL) {
@@ -313,7 +322,7 @@ int  parse_lora_config(char* str, lora_cfg_t *cfg)
         }
         else
             flag = 0;
-        
+
         if ((buf = strchr(str, '=')) != NULL) {
             argv[0] = str;
             if (*(buf + 1) == '\0')
@@ -328,7 +337,7 @@ int  parse_lora_config(char* str, lora_cfg_t *cfg)
             NRF_LOG_INFO("err\r\n");
             return -1;
         }
-        if (argc > 0) {  
+        if (argc > 0) {
             if (set_handler(argc, argv, cfg) != 0) {
                 return -1;
             }
@@ -337,30 +346,37 @@ int  parse_lora_config(char* str, lora_cfg_t *cfg)
             return -1;
         }
         str = ++temp;
-        
-    } while(flag); 
-    
+
+    } while(flag);
+
     return 0;
 }
 
-void add_scan_rsp_list(const uint8_t* name, const uint8_t* mac, int8_t rssi)
+void add_scan_rsp_list(const uint8_t* name, const uint8_t* mac, int8_t rssi, data_t* data)
 {
     uint8_t num = rspNum;
     uint8_t nullmac[6] = {0};
     uint8_t i;
-    
+
     if (num == 0) {
         memcpy(m_bls_scan_rsp[0].bleMac, mac, 6);
         strcpy((char*)m_bls_scan_rsp[0].bleName, (char*)name);
         m_bls_scan_rsp[0].bleRssi = rssi;
         rspNum = 1;
-	    printf("add scan_rsp to list 0\r\n");
+	printf("add scan_rsp to list ");
+
+        for (i=0;i<7;i++)
+        {
+           printf("%02x",m_bls_scan_rsp[i].bleMac);
+        }
+        printf("\r\n");
+
     }
     else if (num < 10) {
         for(i=0; i<num; i++){
             if(0 == memcmp(m_bls_scan_rsp[i].bleMac, mac, 6))
                 return;
-            
+
             if (0 == memcmp(m_bls_scan_rsp[i].bleMac, nullmac, 6))
             {
                 memcpy(m_bls_scan_rsp[i].bleMac, mac, 6);
@@ -386,20 +402,20 @@ void add_scan_rsp_list(const uint8_t* name, const uint8_t* mac, int8_t rssi)
 /**@snippet [Handling the data received over BLE] */
 static void nus_data_handler(ble_nus_evt_t * p_evt)
 {
-    
+
     if (p_evt->type == BLE_NUS_EVT_RX_DATA)
     {
         uint32_t err_code;
-        
+
         NRF_LOG_DEBUG("Received data from BLE NUS. Writing data on UART.");
         NRF_LOG_HEXDUMP_DEBUG(p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
-        
-        
+
+
         NRF_LOG_DEBUG("recv len=%d", p_evt->params.rx_data.length);
         if(strncmp((char*)p_evt->params.rx_data.p_data, "lora_cfg:", strlen("lora_cfg:")) == 0)
         {
             parse_lora_config((char*)p_evt->params.rx_data.p_data+strlen("lora_cfg:"), &g_lora_cfg);
-            loraconfigupdataflg = true;				
+            loraconfigupdataflg = true;
         }
         else
         {
@@ -420,7 +436,7 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
                 while (app_uart_put('\n') == NRF_ERROR_BUSY);
             }
         }
-    } 
+    }
 }
 /**@snippet [Handling the data received over BLE] */
 
@@ -431,14 +447,14 @@ static void services_init(void)
 {
     uint32_t       err_code;
     ble_nus_init_t nus_init;
-    
+
     memset(&nus_init, 0, sizeof(nus_init));
-    
+
     nus_init.data_handler = nus_data_handler;
-    
+
     err_code = ble_nus_init(&m_nus, &nus_init);
     APP_ERROR_CHECK(err_code);
-    
+
 }
 
 
@@ -456,7 +472,7 @@ static void services_init(void)
 static void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
 {
     uint32_t err_code;
-    
+
     if (p_evt->evt_type == BLE_CONN_PARAMS_EVT_FAILED)
     {
         err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_CONN_INTERVAL_UNACCEPTABLE);
@@ -481,9 +497,9 @@ static void conn_params_init(void)
 {
     uint32_t               err_code;
     ble_conn_params_init_t cp_init;
-    
+
     memset(&cp_init, 0, sizeof(cp_init));
-    
+
     cp_init.p_conn_params                  = NULL;
     cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
     cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
@@ -492,7 +508,7 @@ static void conn_params_init(void)
     cp_init.disconnect_on_fail             = false;
     cp_init.evt_handler                    = on_conn_params_evt;
     cp_init.error_handler                  = conn_params_error_handler;
-    
+
     err_code = ble_conn_params_init(&cp_init);
     APP_ERROR_CHECK(err_code);
 }
@@ -506,11 +522,11 @@ static void sleep_mode_enter(void)
 {
     uint32_t err_code = bsp_indication_set(BSP_INDICATE_IDLE);
     APP_ERROR_CHECK(err_code);
-    
+
     // Prepare wakeup buttons.
     err_code = bsp_btn_ble_sleep_mode_prepare();
     APP_ERROR_CHECK(err_code);
-    
+
     // Go to system-off mode (this function will not return; wakeup will cause a reset).
     err_code = sd_power_system_off();
     APP_ERROR_CHECK(err_code);
@@ -526,7 +542,7 @@ static void sleep_mode_enter(void)
 static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 {
     uint32_t err_code;
-    
+
     switch (ble_adv_evt)
     {
       case BLE_ADV_EVT_FAST:
@@ -554,21 +570,21 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     data_t                dev_name;
     data_t                adv_data;
     ble_gap_evt_t const * p_gap_evt = &p_ble_evt->evt.gap_evt;
-    printf("There is a new event ble\r\n");
+   // printf("There is a new event ble. Id:%d\r\n",p_ble_evt->header.evt_id);
     switch (p_ble_evt->header.evt_id)
     {
       case BLE_GAP_EVT_ADV_REPORT:
         {
-			printf("The event is an advert\r\n");
-            ble_gap_evt_adv_report_t const * p_adv_report = &p_gap_evt->params.adv_report; 
+	   // printf("The event is an advert\r\n");
+            ble_gap_evt_adv_report_t const * p_adv_report = &p_gap_evt->params.adv_report;
             adv_data.p_data   = (uint8_t *)p_adv_report->data;
             adv_data.data_len = p_adv_report->dlen;
             // George comment. (Not sure what to print)printf("RSSI: %d\n", p_adv_report->rssi);
             err_code = adv_report_parse(&adv_data, &dev_name);
-            if (err_code == NRF_SUCCESS)
-            {   
-                add_scan_rsp_list(dev_name.p_data,p_adv_report->peer_addr.addr,p_adv_report->rssi);
-            }
+           // if (err_code == NRF_SUCCESS)
+           // {
+                add_scan_rsp_list(dev_name.p_data,p_adv_report->peer_addr.addr,p_adv_report->rssi, &adv_data);
+            //}
         }break;
       case BLE_GAP_EVT_CONNECTED:
         printf("BLE Connected\r\n");
@@ -578,7 +594,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
         nRF_BLE_CONNECTED_FLG = true;
         break;
-        
+
       case BLE_GAP_EVT_DISCONNECTED:
         printf("BLE Disconnected\r\n");
         Write_OLED_string("BLE Disconnect");
@@ -587,7 +603,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         m_conn_handle = BLE_CONN_HANDLE_INVALID;
         nRF_BLE_CONNECTED_FLG = false;
         break;
-        
+
 #if defined(S132)
       case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
         {
@@ -601,23 +617,23 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             APP_ERROR_CHECK(err_code);
         } break;
 #endif
-        
+
       case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
         // Pairing not supported
         err_code = sd_ble_gap_sec_params_reply(m_conn_handle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL, NULL);
         APP_ERROR_CHECK(err_code);
         break;
-        
+
       case BLE_GAP_EVT_DATA_LENGTH_UPDATE_REQUEST:
         {
             ble_gap_data_length_params_t dl_params;
-            
+
             // Clearing the struct will effectivly set members to @ref BLE_GAP_DATA_LENGTH_AUTO
             memset(&dl_params, 0, sizeof(ble_gap_data_length_params_t));
             err_code = sd_ble_gap_data_length_update(p_ble_evt->evt.gap_evt.conn_handle, &dl_params, NULL);
             APP_ERROR_CHECK(err_code);
         } break;
-        
+
       case BLE_GATTS_EVT_SYS_ATTR_MISSING:
         // No system attributes have been stored.
         err_code = sd_ble_gatts_sys_attr_set(m_conn_handle, NULL, 0, 0);
@@ -633,7 +649,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         {
             NRF_LOG_INFO("Connection Request timed out.");
         }
-        break;        
+        break;
       case BLE_GATTC_EVT_TIMEOUT:
         // Disconnect on GATT Client timeout event.
         NRF_LOG_DEBUG("GATT Client Timeout.");
@@ -641,7 +657,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
                                          BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
         APP_ERROR_CHECK(err_code);
         break;
-        
+
       case BLE_GATTS_EVT_TIMEOUT:
         // Disconnect on GATT Server timeout event.
         NRF_LOG_DEBUG("GATT Server Timeout.");
@@ -649,19 +665,19 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
                                          BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
         APP_ERROR_CHECK(err_code);
         break;
-        
+
       case BLE_EVT_USER_MEM_REQUEST:
         err_code = sd_ble_user_mem_reply(p_ble_evt->evt.gattc_evt.conn_handle, NULL);
         APP_ERROR_CHECK(err_code);
         break;
-        
+
       case BLE_GATTS_EVT_RW_AUTHORIZE_REQUEST:
         {
             ble_gatts_evt_rw_authorize_request_t  req;
             ble_gatts_rw_authorize_reply_params_t auth_reply;
-            
+
             req = p_ble_evt->evt.gatts_evt.params.authorize_request;
-            
+
             if (req.type != BLE_GATTS_AUTHORIZE_TYPE_INVALID)
             {
                 if ((req.request.write.op == BLE_GATTS_OP_PREP_WRITE_REQ)     ||
@@ -683,7 +699,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
                 }
             }
         } break; // BLE_GATTS_EVT_RW_AUTHORIZE_REQUEST
-        
+
       default:
         // No implementation needed.
         break;
@@ -698,20 +714,20 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 static void ble_stack_init(void)
 {
     ret_code_t err_code;
-    
+
     err_code = nrf_sdh_enable_request();
     APP_ERROR_CHECK(err_code);
-    
+
     // Configure the BLE stack using the default settings.
     // Fetch the start address of the application RAM.
     uint32_t ram_start = 0;
     err_code = nrf_sdh_ble_default_cfg_set(APP_BLE_CONN_CFG_TAG, &ram_start);
     APP_ERROR_CHECK(err_code);
-    
+
     // Enable BLE stack.
     err_code = nrf_sdh_ble_enable(&ram_start);
     APP_ERROR_CHECK(err_code);
-    
+
     // Register a handler for BLE events.
     NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, ble_evt_handler, NULL);
 }
@@ -735,10 +751,10 @@ void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const * p_evt)
 void gatt_init(void)
 {
     ret_code_t err_code;
-    
+
     err_code = nrf_ble_gatt_init(&m_gatt, gatt_evt_handler);
     APP_ERROR_CHECK(err_code);
-    
+
     err_code = nrf_ble_gatt_att_mtu_periph_set(&m_gatt, NRF_SDH_BLE_GATT_MAX_MTU_SIZE);
     APP_ERROR_CHECK(err_code);
 }
@@ -756,7 +772,7 @@ void bsp_event_handler(bsp_event_t event)
       case BSP_EVENT_SLEEP:
         sleep_mode_enter();
         break;
-        
+
       case BSP_EVENT_DISCONNECT:
         err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
         if (err_code != NRF_ERROR_INVALID_STATE)
@@ -764,7 +780,7 @@ void bsp_event_handler(bsp_event_t event)
             APP_ERROR_CHECK(err_code);
         }
         break;
-        
+
       case BSP_EVENT_WHITELIST_OFF:
         if (m_conn_handle == BLE_CONN_HANDLE_INVALID)
         {
@@ -775,7 +791,7 @@ void bsp_event_handler(bsp_event_t event)
             }
         }
         break;
-        
+
       default:
         break;
     }
@@ -794,18 +810,18 @@ void uart_event_handle(app_uart_evt_t * p_event)
     static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
     static uint8_t index = 0;
     uint32_t       err_code;
-    
+
     switch (p_event->evt_type)
     {
       case APP_UART_DATA_READY:
         UNUSED_VARIABLE(app_uart_get(&data_array[index]));
         index++;
-        
+
         if ((data_array[index - 1] == '\n') || (index >= (m_ble_nus_max_data_len)))
         {
             NRF_LOG_DEBUG("Ready to send data over BLE NUS");
             NRF_LOG_HEXDUMP_DEBUG(data_array, index);
-            
+
             do
             {
                 uint16_t length = (uint16_t)index;
@@ -815,7 +831,7 @@ void uart_event_handle(app_uart_evt_t * p_event)
                     APP_ERROR_CHECK(err_code);
                 }
             } while (err_code == NRF_ERROR_BUSY);
-            
+
             index = 0;
         }
         break;
@@ -823,12 +839,12 @@ void uart_event_handle(app_uart_evt_t * p_event)
         NRF_LOG_ERROR("Communication error occurred while handling UART.");
         APP_ERROR_HANDLER(p_event->data.error_communication);
         break;
-        
+
       case APP_UART_FIFO_ERROR:
         NRF_LOG_ERROR("Error occurred in FIFO module used by UART.");
         APP_ERROR_HANDLER(p_event->data.error_code);
         break;
-        
+
       default:
         break;
     }
@@ -852,7 +868,7 @@ static void uart_init(void)
         .use_parity   = false,
         .baud_rate    = UART_BAUDRATE_BAUDRATE_Baud115200
     };
-    
+
     APP_UART_FIFO_INIT(&comm_params,
                        UART_RX_BUF_SIZE,
                        UART_TX_BUF_SIZE,
@@ -870,25 +886,25 @@ static void advertising_init(void)
 {
     uint32_t               err_code;
     ble_advertising_init_t init;
-    
+
     memset(&init, 0, sizeof(init));
-    
+
     init.advdata.name_type          = BLE_ADVDATA_FULL_NAME;
     init.advdata.include_appearance = false;
     init.advdata.flags              = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
-    
+
     init.srdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
     init.srdata.uuids_complete.p_uuids  = m_adv_uuids;
-    
+
     init.config.ble_adv_fast_enabled  = true;
     init.config.ble_adv_fast_interval = APP_ADV_INTERVAL;
     init.config.ble_adv_fast_timeout  = APP_ADV_TIMEOUT_IN_SECONDS;
-    
+
     init.evt_handler = on_adv_evt;
-    
+
     err_code = ble_advertising_init(&m_advertising, &init);
     APP_ERROR_CHECK(err_code);
-    
+
     ble_advertising_conn_cfg_tag_set(&m_advertising, APP_BLE_CONN_CFG_TAG);
 }
 
@@ -900,15 +916,15 @@ static void advertising_init(void)
 static void buttons_leds_init(bool * p_erase_bonds)
 {
 //    bsp_event_t startup_event;
-    
+
     uint32_t err_code = bsp_init(BSP_INIT_LED, bsp_event_handler);
     APP_ERROR_CHECK(err_code);
-    
+
     bsp_board_buttons_init();
-    
+
 //    err_code = bsp_btn_ble_init(NULL, &startup_event);
 //    APP_ERROR_CHECK(err_code);
-    
+
 //    *p_erase_bonds = (startup_event == BSP_EVENT_CLEAR_BONDING_DATA);
 }
 
@@ -919,7 +935,7 @@ static void log_init(void)
 {
     ret_code_t err_code = NRF_LOG_INIT(NULL);
     APP_ERROR_CHECK(err_code);
-    
+
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 }
 
@@ -937,20 +953,20 @@ void power_manage(void)
 uint32_t i2c_drv_init(void)
 {
     uint32_t err_code;
-    
+
     const nrf_drv_twi_config_t twi_lis_config = {
         .scl                = DEV_TWI_SCL_PIN,
         .sda                = DEV_TWI_SDA_PIN,
         .frequency          = NRF_TWI_FREQ_400K,
         .interrupt_priority = APP_IRQ_PRIORITY_HIGHEST
     };
-    
+
     err_code = rak_i2c_init(&twi_lis_config);
     if(err_code != NRF_SUCCESS)
     {
         return err_code;
     }
-    
+
     return NRF_SUCCESS;
 }
 
@@ -988,10 +1004,10 @@ void* ble_scan_timer_handle()
     APP_ERROR_CHECK(err_code);
     printf("nRF BLE Scan stop.\r\n");
     Write_OLED_string("BLE Scan Stop");
-    err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
-    APP_ERROR_CHECK(err_code);
-    printf("nRF BLE advertising start.\r\n");
-    Write_OLED_string("BLE ADV Start");
+    //err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
+    //APP_ERROR_CHECK(err_code);
+    //printf("nRF BLE advertising start.\r\n");
+    //Write_OLED_string("BLE ADV Start");
     return NULL;
 }
 
@@ -1008,10 +1024,10 @@ void Write_OLED_string(unsigned char* status)
 {
     char len = strlen((char const*)status);
     len = (127 - len*8)/2;
-    
+
     OLED_Init();
     OLED_CLS();
-    
+
     OLED_ShowStr(10,0,"Gkekis",1);
     OLED_ShowStr(0,1,"Send BLE Scan device data to LoRa gateway",1);
     OLED_ShowStr(len,5,status,2);
@@ -1027,7 +1043,7 @@ bool Check_Button_Status()
             return true;
         }
     }
-    return false;       
+    return false;
 }
 
 void nRF_hardware_init()
@@ -1036,7 +1052,7 @@ void nRF_hardware_init()
     bool     erase_bonds;
     err_code = app_timer_init();
     APP_ERROR_CHECK(err_code);
-    
+
     uart_init();
     log_init();
     buttons_leds_init(&erase_bonds);
@@ -1072,25 +1088,25 @@ int main(void)
 {
     uint32_t err_code;
     //bool   erase_bonds;
-    
+
     nRF_hardware_init();
     Write_OLED_string("DEVICE INIT");
-    
+
     nRF_BLE_init();
     nRF_lora_init();
 
     ble_scan_timer_init();
-    
+
     err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
     printf("nRF BLE advertising start.\r\n");
     Write_OLED_string("BLE ADV Start");
-    
+
     // Enter main loop.
     while(1)
     {
         lora_process();
-        
+
         if (!NRF_LOG_PROCESS())
         {
             power_manage();
@@ -1103,7 +1119,7 @@ int main(void)
         if(Check_Button_Status())
         {
             printf("Button turn off.\r\n");
-            
+
             if(nrf_sdh_is_enabled())
             {
                 if (nRF_BLE_CONNECTED_FLG == true)
@@ -1120,15 +1136,15 @@ int main(void)
                     printf("nRF BLE advertising stop.\r\n");
                     err_code = bsp_indication_set(BSP_INDICATE_IDLE);
                     APP_ERROR_CHECK(err_code);
-                    
+
                     memset(m_bls_scan_rsp,0,sizeof(m_bls_scan_rsp));
                     rspNum = 0;
                     scan_start();
                     Write_OLED_string("BLE Scan Start");
-                    app_timer_start(ble_scan_timer,APP_TIMER_TICKS(3000), NULL);
+                    app_timer_start(ble_scan_timer,APP_TIMER_TICKS(8000), NULL);
                     printf("nRF BLE Scan start.\r\n");
                 }
-            }   
+            }
         }
     }
 }

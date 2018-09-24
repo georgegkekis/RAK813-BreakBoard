@@ -175,7 +175,7 @@ NRF_FSTORAGE_DEF(nrf_fstorage_t fstorage) =
 {
     /* Set a handler for fstorage events. */
     .evt_handler = fstorage_evt_handler,
-    
+
     /* These below are the boundaries of the flash space assigned to this instance of fstorage.
     * You must set these manually, even at runtime, before nrf_fstorage_init() is called.
     * The function nrf5_flash_end_addr_get() can be used to retrieve the last address on the
@@ -220,7 +220,7 @@ static void fstorage_evt_handler(nrf_fstorage_evt_t * p_evt)
         NRF_LOG_INFO("--> Event received: ERROR while executing an fstorage operation.");
         return;
     }
-    
+
     switch (p_evt->id)
     {
       case NRF_FSTORAGE_EVT_WRITE_RESULT:
@@ -228,13 +228,13 @@ static void fstorage_evt_handler(nrf_fstorage_evt_t * p_evt)
             NRF_LOG_INFO("--> Event received: wrote %d bytes at address 0x%x.",
                          p_evt->len, p_evt->addr);
         } break;
-        
+
       case NRF_FSTORAGE_EVT_ERASE_RESULT:
         {
             NRF_LOG_INFO("--> Event received: erased %d page from address 0x%x.",
                          p_evt->len, p_evt->addr);
         } break;
-        
+
       default:
         break;
     }
@@ -253,19 +253,19 @@ void u_fs_init()
 {
     ret_code_t rc;
     //NRF_LOG_INFO(LOG_INFO, "fstorage example started!");
-    
+
     nrf_fstorage_api_t * p_fs_api;
-    
+
     //NRF_LOG_INFO(LOG_INFO, "SoftDevice is present.");
     //NRF_LOG_INFO(LOG_INFO, "Initializing nrf_fstorage_sd implementation...");
     /* Initialize an fstorage instance using the nrf_fstorage_sd backend.
     * nrf_fstorage_sd uses the SoftDevice to write to flash. This implementation can safely be
     * used whenever there is a SoftDevice, regardless of its status (enabled/disabled). */
     p_fs_api = &nrf_fstorage_sd;
-    
+
     rc = nrf_fstorage_init(&fstorage, p_fs_api, NULL);
     APP_ERROR_CHECK(rc);
-    
+
 }
 
 void u_fs_check_lora_cfg(lora_cfg_t *cfg)
@@ -287,7 +287,7 @@ void u_fs_read_lora_cfg(lora_cfg_t *cfg)
 void u_fs_write_lora_cfg(lora_cfg_t *cfg)
 {
     ret_code_t rc;
-    
+
     rc = nrf_fstorage_erase(&fstorage, fstorage.start_addr, 1, NULL);
     NRF_LOG_INFO("erase %d", rc);
     APP_ERROR_CHECK(rc);
@@ -299,7 +299,7 @@ void u_fs_write_lora_cfg(lora_cfg_t *cfg)
     APP_ERROR_CHECK(rc);
     wait_for_flash_ready(&fstorage);
     printf("LoRaWAN parameters configured successfully\r\n");
-    
+
 }
 
 
@@ -323,13 +323,13 @@ static void PrepareTxFrame( uint8_t port )
     {
       case 2:
         {
-            if (rspNum) 
+            if (rspNum)
             {
                 strcpy(AppData,m_bls_scan_rsp[send_scan_rsp_index].bleName);
                 AppDataSize = strlen(AppData);
                 printf("AppDataSize=%d\r\n",AppDataSize);
                 NullTxFrame = false;
-            }	
+            }
             else
             {
                 AppDataSize = 0;
@@ -376,7 +376,7 @@ static bool SendFrame( void )
 {
     McpsReq_t mcpsReq;
     LoRaMacTxInfo_t txInfo;
-    
+
     if( LoRaMacQueryTxPossible( AppDataSize, &txInfo ) != LORAMAC_STATUS_OK )
     {
         // Send empty frame in order to flush MAC commands
@@ -405,7 +405,7 @@ static bool SendFrame( void )
             mcpsReq.Req.Confirmed.Datarate = LORAWAN_DEFAULT_DATARATE;
         }
     }
-    
+
     if( LoRaMacMcpsRequest( &mcpsReq ) == LORAMAC_STATUS_OK )
     {
         return false;
@@ -420,12 +420,12 @@ static void OnTxNextPacketTimerEvent( void )
 {
     MibRequestConfirm_t mibReq;
     LoRaMacStatus_t status;
-    
+
     TimerStop( &TxNextPacketTimer );
-    
+
     mibReq.Type = MIB_NETWORK_JOINED;
     status = LoRaMacMibGetRequestConfirm( &mibReq );
-    
+
     if( status == LORAMAC_STATUS_OK )
     {
         if( mibReq.Param.IsNetworkJoined == true )
@@ -475,7 +475,7 @@ static void McpsConfirm( McpsConfirm_t *mcpsConfirm )
           default:
             break;
         }
-        
+
     }
     NextTx = true;
 }
@@ -492,7 +492,7 @@ static void McpsIndication( McpsIndication_t *mcpsIndication )
     {
         return;
     }
-    
+
     switch( mcpsIndication->McpsIndication )
     {
       case MCPS_UNCONFIRMED:
@@ -514,7 +514,7 @@ static void McpsIndication( McpsIndication_t *mcpsIndication )
       default:
         break;
     }
-    
+
     // Check Multicast
     // Check Port
     // Check Datarate
@@ -524,12 +524,12 @@ static void McpsIndication( McpsIndication_t *mcpsIndication )
     // Check Rssi
     // Check Snr
     // Check RxSlot
-    
+
     if( ComplianceTest.Running == true )
     {
         ComplianceTest.DownLinkCounter++;
     }
-    
+
     if( mcpsIndication->RxData == true )
     {
         switch( mcpsIndication->Port )
@@ -560,12 +560,12 @@ static void McpsIndication( McpsIndication_t *mcpsIndication )
                     ComplianceTest.NbGateways = 0;
                     ComplianceTest.Running = true;
                     ComplianceTest.State = 1;
-                    
+
                     MibRequestConfirm_t mibReq;
                     mibReq.Type = MIB_ADR;
                     mibReq.Param.AdrEnable = true;
                     LoRaMacMibSetRequestConfirm( &mibReq );
-                    
+
 #if defined( REGION_EU868 )
                     LoRaMacTestSetDutyCycleOn( false );
 #endif
@@ -583,7 +583,7 @@ static void McpsIndication( McpsIndication_t *mcpsIndication )
                     AppDataSize = LORAWAN_APP_DATA_SIZE;
                     ComplianceTest.DownLinkCounter = 0;
                     ComplianceTest.Running = false;
-                    
+
                     MibRequestConfirm_t mibReq;
                     mibReq.Type = MIB_ADR;
                     mibReq.Param.AdrEnable = LORAWAN_ADR_ON;
@@ -606,7 +606,7 @@ static void McpsIndication( McpsIndication_t *mcpsIndication )
                     break;
                   case 4: // (vii)
                     AppDataSize = mcpsIndication->BufferSize;
-                    
+
                     AppData[0] = 4;
                     for( uint8_t i = 1; i < MIN( AppDataSize, LORAWAN_APP_DATA_MAX_SIZE ); i++ )
                     {
@@ -623,14 +623,14 @@ static void McpsIndication( McpsIndication_t *mcpsIndication )
                   case 6: // (ix)
                     {
                         MlmeReq_t mlmeReq;
-                        
+
                         // Disable TestMode and revert back to normal operation
                         IsTxConfirmed = LORAWAN_CONFIRMED_MSG_ON;
                         AppPort = LORAWAN_APP_PORT;
                         AppDataSize = LORAWAN_APP_DATA_SIZE;
                         ComplianceTest.DownLinkCounter = 0;
                         ComplianceTest.Running = false;
-                        
+
                         MibRequestConfirm_t mibReq;
                         mibReq.Type = MIB_ADR;
                         mibReq.Param.AdrEnable = LORAWAN_ADR_ON;
@@ -639,14 +639,14 @@ static void McpsIndication( McpsIndication_t *mcpsIndication )
                         LoRaMacTestSetDutyCycleOn( LORAWAN_DUTYCYCLE_ON );
 #endif
                         //GpsStart( );
-                        
+
                         mlmeReq.Type = MLME_JOIN;
-                        
+
                         mlmeReq.Req.Join.DevEui = DevEui;
                         mlmeReq.Req.Join.AppEui = AppEui;
                         mlmeReq.Req.Join.AppKey = AppKey;
                         mlmeReq.Req.Join.NbTrials = 3;
-                        
+
                         LoRaMacMlmeRequest( &mlmeReq );
                         DeviceState = DEVICE_STATE_SLEEP;
                     }
@@ -681,7 +681,7 @@ static void McpsIndication( McpsIndication_t *mcpsIndication )
             break;
         }
     }
-    
+
     // Switch LED 1 ON for each received downlink
     //GpioWrite( &Led1, 0 );
     //TimerStart( &Led1Timer );
@@ -711,6 +711,7 @@ static void MlmeConfirm( MlmeConfirm_t *mlmeConfirm )
             }
             else
             {
+              printf("Lora fail status:%d:", mlmeConfirm->Status);
                 // Join was not successful. Try to join again
                 DeviceState = DEVICE_STATE_JOIN;
             }
@@ -764,18 +765,18 @@ void lora_process()
             LoRaMacCallbacks.GetBatteryLevel = BoardGetBatteryLevel;
             LoRaMacInitialization( &LoRaMacPrimitives, &LoRaMacCallbacks, LORAMAC_REGION_EU868 );
             TimerInit( &TxNextPacketTimer, OnTxNextPacketTimerEvent );
-            
+
             //TimerInit( &Led1Timer, OnLed1TimerEvent );
-            //TimerSetValue( &Led1Timer, 2000 );   
-            
+            //TimerSetValue( &Led1Timer, 2000 );
+
             mibReq.Type = MIB_ADR;
             mibReq.Param.AdrEnable = LORAWAN_ADR_ON;
             LoRaMacMibSetRequestConfirm( &mibReq );
-            
+
             mibReq.Type = MIB_PUBLIC_NETWORK;
             mibReq.Param.EnablePublicNetwork = LORAWAN_PUBLIC_NETWORK;
             LoRaMacMibSetRequestConfirm( &mibReq );
-            
+
             DeviceState = DEVICE_STATE_JOIN;
             NRF_LOG_INFO("goto to join");
             break;
@@ -783,20 +784,20 @@ void lora_process()
       case DEVICE_STATE_JOIN:
         {
         MlmeReq_t mlmeReq;
-        
+
         // Initialize LoRaMac device unique ID
         //BoardGetUniqueId( DevEui );
-        
-        printf("OTAA: \r\n");
-        printf("Dev_EUI: ");
-        dump_hex2str(lora_cfg->dev_eui , 8);
-        printf("AppEui: ");
-        dump_hex2str(lora_cfg->app_eui , 8);
-        printf("AppKey: ");
-        dump_hex2str(lora_cfg->app_key , 16);
-        
+
+        //printf("OTAA: \r\n");
+        //printf("Dev_EUI: ");
+        //dump_hex2str(lora_cfg->dev_eui , 8);
+        //printf("AppEui: ");
+        //dump_hex2str(lora_cfg->app_eui , 8);
+        //printf("AppKey: ");
+        //dump_hex2str(lora_cfg->app_key , 16);
+
         mlmeReq.Type = MLME_JOIN;
-        
+
         mlmeReq.Req.Join.DevEui = lora_cfg->dev_eui;//DevEui;
         mlmeReq.Req.Join.AppEui = lora_cfg->app_eui;//AppEui;
         mlmeReq.Req.Join.AppKey = lora_cfg->app_key;//AppKey;
@@ -820,13 +821,13 @@ void lora_process()
                 PrepareTxFrame( 2 );
                 if (!NullTxFrame)
                     NextTx = SendFrame( );
-                
+
                 if ((rspNum > 0) && !NextTx)
                 {
                     Write_OLED_string("Send Data");
-                    send_scan_rsp_index++; 
+                    send_scan_rsp_index++;
                 }
-                
+
                 if (send_scan_rsp_index >= rspNum && (rspNum > 0))
                 {
                     rspNum = 0;
@@ -850,7 +851,7 @@ void lora_process()
       case DEVICE_STATE_CYCLE:
         {
             DeviceState = DEVICE_STATE_SLEEP;
-            
+
             // Schedule next packet transmission
             TimerSetValue( &TxNextPacketTimer, TxDutyCycleTime );
             TimerStart( &TxNextPacketTimer );
