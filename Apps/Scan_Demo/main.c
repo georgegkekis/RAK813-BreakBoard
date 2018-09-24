@@ -198,15 +198,22 @@ static uint32_t adv_report_parse(data_t * p_advdata, data_t * p_typedata)
 {
     uint32_t  index = 0;
     uint8_t * p_data;
+    int i = 0;
 
     p_data = p_advdata->p_data;
+
+	printf("GGreport:\r\n");
+        for (i=0;i<p_data->data_len;i++)
+        {
+            printf("%02x",p_data[i]);
+        }    
+		printf("\r\n");
 
     while (index < p_advdata->data_len)
     {
         uint8_t field_length = p_data[index];
         uint8_t field_type   = p_data[index + 1];
-
-        if (field_type == BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME || field_type == BLE_GAP_AD_TYPE_SHORT_LOCAL_NAME)
+	        if (field_type == BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME || field_type == BLE_GAP_AD_TYPE_SHORT_LOCAL_NAME)
         {
             p_typedata->p_data   = &p_data[index + 2];
             p_typedata->data_len = field_length - 1;
@@ -347,7 +354,7 @@ void add_scan_rsp_list(const uint8_t* name, const uint8_t* mac, int8_t rssi)
         strcpy((char*)m_bls_scan_rsp[0].bleName, (char*)name);
         m_bls_scan_rsp[0].bleRssi = rssi;
         rspNum = 1;
-	//printf("add scan_rsp to list 0\r\n");
+	    printf("add scan_rsp to list 0\r\n");
     }
     else if (num < 10) {
         for(i=0; i<num; i++){
@@ -360,8 +367,8 @@ void add_scan_rsp_list(const uint8_t* name, const uint8_t* mac, int8_t rssi)
                 strcpy((char*)m_bls_scan_rsp[i].bleName, (char*)name);
                 m_bls_scan_rsp[i].bleRssi = rssi;
                 rspNum++;
+                printf("add scan_rsp to list %d\r\n",i);
                 return;
-                //printf("add scan_rsp to list %d\r\n",i);
             }
         }
     }
@@ -547,15 +554,16 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     data_t                dev_name;
     data_t                adv_data;
     ble_gap_evt_t const * p_gap_evt = &p_ble_evt->evt.gap_evt;
- 
+    printf("There is a new event ble\r\n");
     switch (p_ble_evt->header.evt_id)
     {
       case BLE_GAP_EVT_ADV_REPORT:
         {
+			printf("The event is an advert\r\n");
             ble_gap_evt_adv_report_t const * p_adv_report = &p_gap_evt->params.adv_report; 
             adv_data.p_data   = (uint8_t *)p_adv_report->data;
             adv_data.data_len = p_adv_report->dlen;
-            
+            // George comment. (Not sure what to print)printf("RSSI: %d\n", p_adv_report->rssi);
             err_code = adv_report_parse(&adv_data, &dev_name);
             if (err_code == NRF_SUCCESS)
             {   
@@ -1004,7 +1012,7 @@ void Write_OLED_string(unsigned char* status)
     OLED_Init();
     OLED_CLS();
     
-    OLED_ShowStr(10,0,"RAK813 BreakBoard",1);
+    OLED_ShowStr(10,0,"Gkekis",1);
     OLED_ShowStr(0,1,"Send BLE Scan device data to LoRa gateway",1);
     OLED_ShowStr(len,5,status,2);
 }
@@ -1117,14 +1125,10 @@ int main(void)
                     rspNum = 0;
                     scan_start();
                     Write_OLED_string("BLE Scan Start");
-                    app_timer_start(ble_scan_timer,APP_TIMER_TICKS(1000), NULL);
+                    app_timer_start(ble_scan_timer,APP_TIMER_TICKS(3000), NULL);
                     printf("nRF BLE Scan start.\r\n");
                 }
             }   
         }
     }
 }
-
-/**
-* @}
-*/
